@@ -8,7 +8,7 @@
         return (
         // Provide the client to your App
         React.createElement(React.Fragment, null,
-            React.createElement("div", { className: 'w-full h-full' },
+            React.createElement("div", { className: 'w-full h-full bg-slate-100' },
                 React.createElement("button", { onClick: async () => {
                         const folder = await window.showDirectoryPicker({ startIn: "documents" });
                         folder.requestPermission({ mode: 'readwrite' });

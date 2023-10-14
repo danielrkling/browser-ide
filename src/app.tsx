@@ -18,7 +18,7 @@ function App() {
   return (
     // Provide the client to your App
 <>
-    <div className='w-full h-full'>
+    <div className='w-full h-full bg-slate-100'>
       <button onClick={async () => {
         const folder = await window.showDirectoryPicker({ startIn: "documents" });
         folder.requestPermission({ mode: 'readwrite' })
