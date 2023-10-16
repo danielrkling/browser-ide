@@ -534,15 +534,30 @@ video {
   --tw-backdrop-sepia:  ;
 }
 
+.flex {
+  display: flex;
+}
+
 .h-full {
   height: 100%;
+}
+
+.h-screen {
+  height: 100vh;
 }
 
 .w-full {
   width: 100%;
 }
 
-.bg-slate-100 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(241 245 249 / var(--tw-bg-opacity));
+.w-screen {
+  width: 100vw;
+}
+
+.border-2 {
+  border-width: 2px;
+}
+
+.pl-2 {
+  padding-left: 0.5rem;
 }

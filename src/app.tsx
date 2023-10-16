@@ -1,76 +1,96 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
+import React from "react";
+import ReactDOM from "react-dom/client";
 import {
   useQuery,
   useMutation,
   useQueryClient,
   QueryClient,
   QueryClientProvider,
-} from '@tanstack/react-query'
+} from "@tanstack/react-query";
+import * as monaco from "monaco-editor";
+import { useGlobalState } from "./state";
+import {Folder} from './folder'
 
 // Create a client
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
 
 function App() {
-  const [rootFolders, setRootFolders] = React.useState([] as FileSystemDirectoryHandle[]);
-
-
-  return (
-    // Provide the client to your App
-<>
-    <div className='w-full h-full bg-slate-100'>
-      <button onClick={async () => {
-        const folder = await window.showDirectoryPicker({ startIn: "documents" });
-        folder.requestPermission({ mode: 'readwrite' })
-        setRootFolders(prev => [...prev, folder])
-      }}>Open Folder</button>
-    </div>
-    {rootFolders.map(folder=><Folder handle={folder} path={[]} />)}
-    </>
-
-  )
-}
-
-
-
-function Folder(props: { handle: FileSystemDirectoryHandle, path:string[] }) {
-  const path = [...props.path,props.handle.name]
-  const children = useQuery(path, {
-    queryFn: () => gen2array(props.handle.entries()),
-    initialData:[]
-  })
+  const [rootFolders, setRootFolders] = React.useState(
+    [] as FileSystemDirectoryHandle[]
+  );
+  const [activeModel] = useGlobalState(
+    "model",
+    null as monaco.editor.ITextModel
+  );
 
   return (
-    <div>
-      {children.data.map(([name,handle])=>{
-        if (handle.kind==='directory'){
-          return <Folder handle={handle} key={name} path={path} />
-        }else if(handle.kind==='file'){
-          return <File handle={handle} key={name} path={path} />
-        }
-      })}
-    </div>
-  )
-}
-
-function File(props: { handle: FileSystemFileHandle, path:string[]}) {
-  const path = [...props.path,props.handle.name]
-
-    return(
+    <div className="w-screen h-screen flex">
       <div>
-        {path.join('/')}
+        <button
+          onClick={async () => {
+            const folder = await window.showDirectoryPicker({
+              startIn: "desktop",
+            });
+            folder.requestPermission({ mode: "readwrite" });
+            setRootFolders((prev) => [...prev, folder]);
+          }}
+        >
+          Open Folder
+        </button>
+        <ul>
+          {rootFolders.map((folder) => (
+            <Folder
+              handle={folder}
+              parentPath={[]}
+              key={folder.name}
+              parentChecked={false}
+            />
+          ))}
+        </ul>
+
+        <ol>
+          {monaco.editor.getModels().map((model) => {
+            return <li key={model.uri.toString()}>{model.uri.toString()}</li>;
+          })}
+        </ol>
       </div>
-    )
+      <div className="w-full h-screen">
+        <Editor model={activeModel} />
+      </div>
+    </div>
+  );
 }
 
 
-const root = ReactDOM.createRoot(document.getElementById('root')!);
-root.render(<QueryClientProvider client={queryClient}><App /></QueryClientProvider>);
 
-async function gen2array<T>(gen: AsyncIterable<T>): Promise<T[]> {
-  const out: T[] = []
-  for await (const x of gen) {
-    out.push(x)
-  }
-  return out
+const root = ReactDOM.createRoot(document.getElementById("root")!);
+root.render(
+  <QueryClientProvider client={queryClient}>
+    <App />
+  </QueryClientProvider>
+);
+
+
+monaco.editor.setTheme("vs-dark");
+
+function Editor(props: { model: monaco.editor.ITextModel }) {
+  const ref = React.useRef<HTMLDivElement>();
+  const editor = React.useRef<monaco.editor.IEditor>();
+
+  React.useEffect(() => {
+    if (ref.current instanceof HTMLDivElement) {
+      editor.current = monaco.editor.create(ref.current, {
+        model: null,
+        automaticLayout: true,
+      });
+    }
+  }, [ref.current]);
+
+  React.useEffect(() => {
+    if (editor.current) {
+      editor.current.setModel(props.model);
+    }
+  }, [props.model]);
+
+  return <div className="w-full h-full" ref={ref} />;
 }
