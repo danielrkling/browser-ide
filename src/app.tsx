@@ -1,27 +1,72 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
-import * as monaco from "monaco-editor";
-import { useGlobalState } from "./state";
-import {Folder} from './folder'
 
-// Create a client
-const queryClient = new QueryClient();
+import * as monaco from "monaco-editor";
+
+import { createStore2 } from "./store";
+
+// interface RootFolderState{
+//   folders: Map<string,FileSystemDirectoryHandle>
+//   add: (folder: FileSystemDirectoryHandle)=>void
+//   remove: (folder: FileSystemDirectoryHandle)=>void
+//   clear: ()=>void
+// }
+
+// const useRootFolders = createStore<RootFolderState>((set,get)=>({
+//   folders: new Map(),
+//   add: (folder: FileSystemDirectoryHandle)=>{
+//     set('folders',(prev: RootFolderState['folders'])=>{
+//       prev.set(folder.name,folder)
+//       return new Map(prev)
+//     })
+//   },
+//   remove: (folder: FileSystemDirectoryHandle)=>{
+//     set('folders',(prev: RootFolderState['folders'])=>{
+//       prev.delete(folder.name)s
+//       return new Map(prev)
+//     })
+//   },
+//   clear: ()=>{
+//     set('folders',(prev: RootFolderState['folders'])=>{
+//       return new Map()
+//     })
+//   }
+// }))
+
+interface FolderStoreActions {
+  add: (folder: FileSystemDirectoryHandle) => void
+  remove: (folder: FileSystemDirectoryHandle) => void
+  clear: () => void
+}
+
+
+const useFolderStore = createStore2<Map<string, FileSystemDirectoryHandle>, FolderStoreActions>(
+  new Map<string, FileSystemDirectoryHandle>(),
+  (set, get) => ({
+    add: (folder: FileSystemDirectoryHandle) => {
+      set((prev) => {
+        let map = new Map(prev)
+        map.set(folder.name, folder)
+        return map
+      })
+    },
+    remove: (folder: FileSystemDirectoryHandle) => {
+      set((prev) => {
+        let map = new Map(prev)
+        map.set(folder.name, folder)
+        return map
+      })
+    },
+    clear: () => {
+      set(new Map())
+    }
+
+  }))
 
 function App() {
-  const [rootFolders, setRootFolders] = React.useState(
-    [] as FileSystemDirectoryHandle[]
-  );
-  const [activeModel] = useGlobalState(
-    "model",
-    null as monaco.editor.ITextModel
-  );
+  const rootFolders = useFolderStore()
+  const add = useFolderStore.add
+
 
   return (
     <div className="w-screen h-screen flex">
@@ -32,18 +77,18 @@ function App() {
               startIn: "desktop",
             });
             folder.requestPermission({ mode: "readwrite" });
-            setRootFolders((prev) => [...prev, folder]);
+            add(folder)
           }}
         >
           Open Folder
         </button>
         <ul>
-          {rootFolders.map((folder) => (
-            <Folder
-              handle={folder}
-              parentPath={[]}
+          {[...rootFolders.values()].map((folder) => (
+            <div
+
               key={folder.name}
-              parentChecked={false}
+              children={folder.name}
+
             />
           ))}
         </ul>
@@ -55,7 +100,7 @@ function App() {
         </ol>
       </div>
       <div className="w-full h-screen">
-        <Editor model={activeModel} />
+        {/* <Editor model={activeModel} /> */}
       </div>
     </div>
   );
@@ -65,9 +110,7 @@ function App() {
 
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 root.render(
-  <QueryClientProvider client={queryClient}>
-    <App />
-  </QueryClientProvider>
+  <App />
 );
 
 
